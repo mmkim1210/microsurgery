@@ -1,0 +1,151 @@
+---
+title: "Effect of microsurgery training session on confidence and skills of resident trainees"
+author: "Minsoo Kim"
+date: "08/27/2022"
+format:
+  html:
+    code-fold: true
+jupyter: julia-1.8
+---
+
+```{julia}
+using XLSX, DataFrames, CairoMakie, HypothesisTests, Printf
+
+preq  = DataFrame(XLSX.readtable("../data/pre-questionnaire.xlsx", 1))
+postq = DataFrame(XLSX.readtable("../data/post-questionnaire.xlsx", 1))
+
+@assert size(preq)  == (19, 12)
+@assert size(postq) == (18, 18)
+[preq[!, i] .= convert.(Int, preq[:, i]) for i in 3:12]
+[postq[!, i] .= convert.(Int, postq[:, i]) for i in 3:17]
+
+sort!(preq, "ID:")
+sort!(postq, "ID:")
+preq1 = preq[Not(findall(==(false), [in(id, postq[:, "ID:"]) for id in preq[:, "ID:"]])), :]
+@assert sum(preq1[:, "ID:"] .== postq[:, "ID:"]) == 18
+n = size(preq1, 1);
+```
+
+## Training has a significant positive effect in boosting confidence of resident trainees
+
+Resident trainees completed two questionnaires, one before and one after receiving hands-on training, to assess for subjective degree of confidence and skills for microsurgery. For all questions, residents reported significantly higher scores post-training (@fig-1).
+
+```{julia}
+#| label: fig-1
+#| fig-cap: Shown here is an overall increase in confidence for microsurgery before and after training. Participants were assigned a score of 1-5 for each question, where 1 = strongly disagree, 2 = disagree, 3 = neutral, 4 = agree, and 5 = strongly agree. Total 18 participants completed both pre- and post-training questionnaires. Q1 corresponds to confidence in assisting microvascular surgery. Q2 corresponds to confidence in handling and identifying microvascular instruments. Q3 corresponds to confidence in positioning of hands during microvascular surgery. Q4 asks "I have been taught the correct technique to perform a vessel anastomosis". Q5 asks "I have been taught how to tie a square know under the microscope". And Q6 corresponds to confidence in tying a square knot. Each point represents an individual and the responses for the same individual are connected with a line. P values were obtained using Wilcoxon signed-rank test. Paired t-test gave similar significant results. 
+
+f = Figure()
+axs = [Axis(f[i, j]) for i in [2, 4], j in 1:3]
+titles = "Q" .* string.(collect(1:6))
+for i in 1:6
+    p = @sprintf "%.2E" pvalue(SignedRankTest(preq1[:, i + 2], postq[:, i + 2]))
+    if i <= 3
+        scatter!(axs[1, mod1(i, 3)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
+        [lines!(axs[1, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("royalblue", 0.5)) for j in 1:n]
+        text!(axs[1, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+        Box(f[1, mod1(i, 3)], color = :gray90)
+        Label(f[1, mod1(i, 3)], titles[i], tellwidth = false)
+    else
+        scatter!(axs[2, mod1(i, 3)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
+        [lines!(axs[2, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("royalblue", 0.5)) for j in 1:n]
+        text!(axs[2, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+        Box(f[3, mod1(i, 3)], color = :gray90)
+        Label(f[3, mod1(i, 3)], titles[i], tellwidth = false)
+    end
+end
+[xlims!(axs[i, j], -0.25, 1.25) for i in 1:2, j in 1:3]
+[axs[i, j].xticks = ([0, 1], ["pre", "post"]) for i in 1:2, j in 1:3]
+[hidexdecorations!(axs[i, j], ticklabels = false, grid = false) for i in 1:2, j in 1:3]
+Label(f[1:4, 0], text = "score", rotation = pi / 2)
+[rowgap!(f.layout, i, 2.5) for i in [1, 3]]
+f
+```
+
+## Higher proportion of trainees became proficient with knot tying for microsurgery
+
+One of the questions asked pre- and post-training the number of required knots when suturing during microvascular surgery (which is 3). A significantly higher proportion of resident trainees obtained the correct solution post-training (@fig-2).
+
+```{julia}
+#| label: fig-2
+#| fig-cap: Shown here is a significant difference in the proportion of residents who guessed the correct number of knots for suturing in microsurgery (Q7) before and after training. The error bar corresponds to one standard error. P value was obtained using Fisher's exact test. Logistic regression gave similar significant results.  
+
+f = Figure()
+ax = Axis(f[1, 1])
+n1, n2 = count(==(3), preq[:, 9]), count(==(3), postq[:, 9])
+p1, p2 = n1 / 19, n2 / n
+barplot!(ax, [0, 1], [p1, p2], width = 0.5, color = ("royalblue", 0.8))
+errorbars!(ax, [0, 1], [p1, p2], sqrt.([p1 * (1 - p1) / n, p2 * (1 - p2) / n]))
+ax.xticks = ([0, 1], ["pre", "post"])
+ax.yticks = 0:0.2:0.95
+xlims!(ax, -0.5, 1.5)
+ylims!(ax, -0.05, 0.95)
+hidexdecorations!(ax, ticklabels = false, grid = false)
+p = @sprintf "%.2E" pvalue(FisherExactTest(n1, n2, 19 - n1, n - n2))
+text!(ax, 0.5, 0.925, text = "p = " * p, align = (:center, :top), textsize = 15)
+Label(f[1, 0], text = "proportion", rotation = pi / 2, tellheight = false)
+Box(f[0, 1], color = :gray90)
+Label(f[0, 1], "Q7", tellwidth = false)
+rowgap!(f.layout, 1, 2.5)
+f
+```
+
+## Residents with prior experiences with microsurgery tend to have a better knowledge base
+
+Several questions in the pre-training questionnaire surveyed the residents about prior microsurgery experiences. Those with prior experiences were more likely to obtain the correct solution to the number of knots needed for microsurgery suturing (@fig-3), although these results were not significant due to limited sample size and hence power. 
+
+```{julia}
+#| label: fig-3
+#| fig-cap: Shown here is an increasing trend in the proportion of residents who guessed the correct number of knots for suturing in microsurgery (Q7) for those with prior microsurgery experiences. Q8 asks "I have been instructed on basic microvascular skills during residency so far". Q9 asks "I am considering a career in microvascular surgery". Q10 asks "I have assisted in microvascular surgery using the microscope". Note that respones to Q8 and Q10 were highly correlated. To have adequate sample sizes, responses of 1 to 3 were combined, while responses 4 and 5 were combined for each question. The error bar corresponds to one standard error. Also note the large stand errors due to limited sample size. P values were obtained using Fisher's exact test.
+
+f = Figure()
+axs = [Axis(f[1, i]) for i in 1:3]
+titles = "Q" .* string.(collect(8:10)) .* " (pre)"
+for i in 1:3
+    ind = findall(>(3), preq[:, 9 + i])
+    n1 = count(==(3), preq[ind, 9])
+    n2 = count(==(3), preq[Not(ind), 9])
+    p1, p2 = n1 / length(ind), n2 / (19 - length(ind))
+    barplot!(axs[i], [0, 1], [p2, p1], width = 0.5, color = ("royalblue", 0.8))
+    errorbars!(axs[i], [0, 1], [p2, p1], sqrt.([p2 * (1 - p2) / (19 - length(ind)), p1 * (1 - p1) / length(ind)]))
+    axs[i].xticks = ([0, 1], ["No", "Yes"])
+    axs[i].yticks = 0:0.2:0.95
+    xlims!(axs[i], -0.5, 1.5)
+    ylims!(axs[i], -0.05, 0.95)
+    p = @sprintf "%.2E" pvalue(FisherExactTest(n1, n2, length(ind) - n1, 19 - length(ind) - n2))
+    text!(axs[i], 0.5, 0.925, text = "p = " * p, align = (:center, :top), textsize = 15)
+    hidexdecorations!(axs[i], ticklabels = false, grid = false)
+end
+[Box(f[0, j], color = :gray90) for j in 1:3]
+[Label(f[0, j], titles[j], tellwidth = false) for j in 1:3]
+Label(f[1, 0], text = "proportion", rotation = pi / 2, tellheight = false)
+rowgap!(f.layout, 1, 2.5)
+f
+```
+
+## Residents report overall positive experience with microsurgery training
+We also sought for general feedback on microsurgery training with couple questions in post-training questionnaire. Overwhelming proportion of residents responded with positive feedback (@fig-4).
+
+```{julia}
+#| label: fig-4
+#| fig-cap: Shown here is the proportion of residents with different scores for microsurgery training experience. Q8 asks "I found the skills session helpful", Q9 "This session taught me how to properly handle and identify microvascular instruments", Q10 "This session taught me the correct technique to perform an anastomosis", Q11 "This session made me confident of my skills knot tying under the microscope", Q12 "I am more confident now to participate in microvascular surgery in the operating room", Q13 "Learning how to perform microvascular surgery in this setting was a low stress experience", Q14 "Repeating this course again would help me to perfect my microsurgical skills", and Q15 "This course is invaluable at teaching us microvascular techniques in a controlled setting without the high stakes of the operating room". A score of 1-5 for each question is possible, where 1 = strongly disagree, 2 = disagree, 3 = neutral, 4 = agree, and 5 = strongly agree.
+
+f = Figure()
+axs = [Axis(f[i, j]) for i in [2, 4, 6, 8], j in 1:2]
+titles = "Q" .* string.(collect(8:15)) .* " (post)"
+for i in 1:8
+    row = div(i - 1, 2) + 1
+    col = mod1(i, 2)
+    ns = [count(==(s), postq[:, 9 + i]) for s in 1:5]
+    barplot!(axs[row, col], 1:5, ns / n, color = ("royalblue", 0.8))
+    ylims!(axs[row, col], 0, 0.95)
+    Box(f[2 * row - 1, col], color = :gray90)
+    Label(f[2 * row - 1, col], titles[i], tellwidth = false)    
+end
+Label(f[end + 1, 1:2], text = "score")
+Label(f[1:8, 0], text = "proportion", rotation = pi / 2)
+[rowgap!(f.layout, i, 2.5) for i in 1:8]
+f
+```
+
+## Conclusion
+Based on these results, hadnds-on microsurgery training was clearly effective in boosting the confidence and knowledge base of resident trainees for microsurgery. However, our assessment of the exact extent to which the knowledge base and competency of residents increased is limited in this study, since we only asked a single question on such. Better, more objective measures of competency in microsurgery will be needed in the future.
