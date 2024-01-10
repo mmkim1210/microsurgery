@@ -14,70 +14,75 @@ preq1 = preq[Not(findall(==(false), [in(id, postq[:, "ID:"]) for id in preq[:, "
 @assert sum(preq1[:, "ID:"] .== postq[:, "ID:"]) == 18
 n = size(preq1, 1)
 
+CairoMakie.activate!(type = "svg")
+
 begin
     f = Figure()
     axs = [Axis(f[i, j]) for i in [2, 4], j in 1:3]
-    titles = "Q" .* string.(collect(1:6)) .* "\n "
+    titles = "Q" .* string.(collect(1:6))
     for i in 1:6
         p = @sprintf "%.2E" pvalue(SignedRankTest(preq1[:, i + 2], postq[:, i + 2]))
         if i <= 3
             scatter!(axs[1, mod1(i, 3)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
-            [lines!(axs[1, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("#2774AE", 0.5)) for j in 1:n]
-            text!(axs[1, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+            [lines!(axs[1, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("black", 0.25)) for j in 1:n]
+            text!(axs[1, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), fontsize = 10)
             Box(f[1, mod1(i, 3)], color = :gray90)
             Label(f[1, mod1(i, 3)], titles[i], tellwidth = false)
         else
             scatter!(axs[2, mod1(i, 3)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
-            [lines!(axs[2, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("#2774AE", 0.5)) for j in 1:n]
-            text!(axs[2, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+            [lines!(axs[2, mod1(i, 3)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("black", 0.25)) for j in 1:n]
+            text!(axs[2, mod1(i, 3)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), fontsize = 10)
             Box(f[3, mod1(i, 3)], color = :gray90)
             Label(f[3, mod1(i, 3)], titles[i], tellwidth = false)
         end
     end
     [xlims!(axs[i, j], -0.25, 1.25) for i in 1:2, j in 1:3]
     [axs[i, j].xticks = ([0, 1], ["pre", "post"]) for i in 1:2, j in 1:3]
-    [hidexdecorations!(axs[i, j], ticklabels = false, grid = false) for i in 1:2, j in 1:3]
+    [hidexdecorations!(axs[i, j], ticklabels = false) for i in 1:2, j in 1:3]
+    [hideydecorations!(axs[i, j], ticklabels = false, ticks = false) for i in 1:2, j in 1:3]
     Label(f[1:4, 0], text = "score", rotation = pi / 2)
     [rowgap!(f.layout, i, 2.5) for i in [1, 3]]
-    save("figs/fig1a.pdf", f)
+    resize_to_layout!(f)
+    save("figs/fig1a.svg", f)
     f
 end
 
 begin
-    f = Figure(resolution = (800, 800))
+    f = Figure(resolution = (800, 500))
     axs = [Axis(f[i, j]) for i in [2, 4, 6], j in 1:2]
-    titles = " " .* string.(collect(1:6)) .* "\n "
+    titles = " " .* string.(collect(1:6))
     for i in 1:6
         p = @sprintf "%.2E" pvalue(SignedRankTest(preq1[:, i + 2], postq[:, i + 2]))
         if i <= 2
             scatter!(axs[1, mod1(i, 2)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
-            [lines!(axs[1, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("#2774AE", 0.5)) for j in 1:n]
-            text!(axs[1, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+            [lines!(axs[1, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("black", 0.25)) for j in 1:n]
+            text!(axs[1, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), fontsize = 10)
             Box(f[1, mod1(i, 2)], color = :gray90)
             Label(f[1, mod1(i, 2)], titles[i], tellwidth = false)
         elseif i <= 4
             scatter!(axs[2, mod1(i, 2)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
-            [lines!(axs[2, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("#2774AE", 0.5)) for j in 1:n]
-            text!(axs[2, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+            [lines!(axs[2, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("black", 0.25)) for j in 1:n]
+            text!(axs[2, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), fontsize = 10)
             Box(f[3, mod1(i, 2)], color = :gray90)
             Label(f[3, mod1(i, 2)], titles[i], tellwidth = false)
         else
             scatter!(axs[3, mod1(i, 2)], vcat(zeros(n), ones(n)), vcat(preq1[:, i + 2], postq[:, i + 2]), color = ("black", 0.5))
-            [lines!(axs[3, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("#2774AE", 0.5)) for j in 1:n]
-            text!(axs[3, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), textsize = 15)
+            [lines!(axs[3, mod1(i, 2)], [0, 1], [preq1[j, i + 2], postq[j, i + 2]], color = ("black", 0.25)) for j in 1:n]
+            text!(axs[3, mod1(i, 2)], 0.85, 1.5, text = "p = " * p, align = (:center, :top), fontsize = 10)
             Box(f[5, mod1(i, 2)], color = :gray90)
             Label(f[5, mod1(i, 2)], titles[i], tellwidth = false)
         end
     end
     [xlims!(axs[i, j], -0.25, 1.25) for i in 1:3, j in 1:2]
     [axs[i, j].xticks = ([0, 1], ["pre", "post"]) for i in 1:3, j in 1:2]
-    [hidexdecorations!(axs[i, j], ticklabels = false, grid = false) for i in 1:3, j in 1:2]
+    [hidexdecorations!(axs[i, j], ticklabels = false) for i in 1:3, j in 1:2]
+    [hideydecorations!(axs[i, j], ticklabels = false, ticks = false) for i in 1:3, j in 1:2]
     Label(f[1:6, 0], text = "score", rotation = pi / 2)
     [rowgap!(f.layout, i, 2.5) for i in [1, 3, 5]]
     colsize!(f.layout, 1, Aspect(2, 1.5))
     colsize!(f.layout, 2, Aspect(2, 1.5))
-
-    save("figs/fig1b.pdf", f)
+    resize_to_layout!(f)
+    save("figs/fig1b.svg", f)
     f
 end
 
@@ -86,20 +91,21 @@ begin
     ax = Axis(f[1, 1])
     n1, n2 = count(==(3), preq[:, 9]), count(==(3), postq[:, 9])
     p1, p2 = n1 / 19, n2 / n
-    barplot!(ax, [0, 1], [p1, p2], width = 0.5, color = ("royalblue", 0.8))
-    errorbars!(ax, [0, 1], [p1, p2], sqrt.([p1 * (1 - p1) / n, p2 * (1 - p2) / n]))
+    barplot!(ax, [0, 1], [p1, p2], width = 0.5, color = ("black", 0.375))
+    errorbars!(ax, [0, 1], [p1, p2], sqrt.([p1 * (1 - p1) / n, p2 * (1 - p2) / n]), color = ("black", 0.5))
     ax.xticks = ([0, 1], ["pre", "post"])
     ax.yticks = 0:0.2:0.95
     xlims!(ax, -0.5, 1.5)
     ylims!(ax, -0.05, 0.95)
-    hidexdecorations!(ax, ticklabels = false, grid = false)
+    hidexdecorations!(ax, ticklabels = false)
+    hideydecorations!(ax, ticklabels = false, ticks = false)
     p = @sprintf "%.2E" pvalue(FisherExactTest(n1, n2, 19 - n1, n - n2))
-    text!(ax, 0.5, 0.925, text = "p = " * p, align = (:center, :top), textsize = 15)
+    text!(ax, 0.5, 0.925, text = "p = " * p, align = (:center, :top), fontsize = 15)
     Label(f[1, 0], text = "proportion", rotation = pi / 2, tellheight = false)
     Box(f[0, 1], color = :gray90)
     Label(f[0, 1], "Q7", tellwidth = false)
     rowgap!(f.layout, 1, 2.5)
-    save("figs/fig2.png", f)
+    save("figs/fig2.svg", f)
     f
 end
 
@@ -113,41 +119,43 @@ begin
         n1 = count(==(3), preq[ind, 9])
         n2 = count(==(3), preq[Not(ind), 9])
         p1, p2 = n1 / length(ind), n2 / (19 - length(ind))
-        barplot!(axs[i], [0, 1], [p2, p1], width = 0.5, color = ("royalblue", 0.8))
-        errorbars!(axs[i], [0, 1], [p2, p1], sqrt.([p2 * (1 - p2) / (19 - length(ind)), p1 * (1 - p1) / length(ind)]))
+        barplot!(axs[i], [0, 1], [p2, p1], width = 0.5, color = ("black", 0.375))
+        errorbars!(axs[i], [0, 1], [p2, p1], sqrt.([p2 * (1 - p2) / (19 - length(ind)), p1 * (1 - p1) / length(ind)]), color = ("black", 0.5))
         axs[i].xticks = ([0, 1], ["No", "Yes"])
         axs[i].yticks = 0:0.2:0.95
         xlims!(axs[i], -0.5, 1.5)
         ylims!(axs[i], -0.05, 0.95)
         p = @sprintf "%.2E" pvalue(FisherExactTest(n1, n2, length(ind) - n1, 19 - length(ind) - n2))
-        text!(axs[i], 0.5, 0.925, text = "p = " * p, align = (:center, :top), textsize = 15)
-        hidexdecorations!(axs[i], ticklabels = false, grid = false)
+        text!(axs[i], 0.5, 0.925, text = "p = " * p, align = (:center, :top), fontsize = 15)
+        hidexdecorations!(axs[i], ticklabels = false)
+        hideydecorations!(axs[i], ticklabels = false, ticks = false)
     end
     [Box(f[0, j], color = :gray90) for j in 1:3]
     [Label(f[0, j], titles[j], tellwidth = false) for j in 1:3]
     Label(f[1, 0], text = "proportion", rotation = pi / 2, tellheight = false)
     rowgap!(f.layout, 1, 2.5)
-    save("figs/fig3.png", f)
+    save("figs/fig3.svg", f)
     f
 end
 
 begin
     f = Figure(resolution = (800, 800))
     axs = [Axis(f[i, j]) for i in [2, 4, 6, 8], j in 1:2]
-    titles = "Q" .* string.(collect(8:15)) .* " (post) \n "
+    titles = "Q" .* string.(collect(8:15)) .* " (post)"
     for i in 1:8
         row = div(i - 1, 2) + 1
         col = mod1(i, 2)
         ns = [count(==(s), postq[:, 9 + i]) for s in 1:5]
-        barplot!(axs[row, col], 1:5, ns / n, color = ("#2774AE", 0.8))
+        barplot!(axs[row, col], 1:5, ns / n, color = ("black", 0.375))
         ylims!(axs[row, col], 0, 0.95)
         Box(f[2 * row - 1, col], color = :gray90)
-        Label(f[2 * row - 1, col], titles[i], tellwidth = false)    
+        Label(f[2 * row - 1, col], titles[i], tellwidth = false)
+        hidedecorations!(axs[row, col], ticklabels = false, ticks = false)  
     end
     Label(f[end + 1, 1:2], text = "score")
     Label(f[1:8, 0], text = "proportion", rotation = pi / 2)
     [rowgap!(f.layout, i, 2.5) for i in [1, 3, 5, 7]]
-    save("figs/fig4b.pdf", f)
+    save("figs/fig4.svg", f)
     f
 end
 
